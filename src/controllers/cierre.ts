@@ -2,12 +2,27 @@ import { NextFunction, Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
 import { HttpError } from '../middlewares/errorHandler.js';
 import { calcularBalances, flujoMinimoEfectivo } from '../utils/settlement.js';
+import { broadcastTableUpdate } from '../socket.js';
 
 // POST /api/events/:id/close — Liquidar la mesa
 // Transacción atómica masiva: cambia estado a CERRADO + genera Transacciones mínimas
 export const cerrarEvento = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const eventoId = req.evento!.id;
+    const headerUserId = req.headers['x-user-id'] as string | undefined;
+    const usuarioId = (req.user?.id || headerUserId);
+
+    const isCreadorDirecto =
+      req.evento!.creador_id === usuarioId ||
+      (!!headerUserId && req.evento!.creador_id === headerUserId);
+    const isCreadorPorEmail =
+      !!req.user?.email &&
+      !!req.evento?.creador?.email &&
+      req.user.email.toLowerCase() === req.evento.creador.email.toLowerCase();
+
+    if (usuarioId && !isCreadorDirecto && !isCreadorPorEmail) {
+      throw new HttpError(403, 'Solo el organizador de la mesa puede cerrar y liquidar la cuenta');
+    }
 
     const participantes = await prisma.participante.findMany({
       where: { evento_id: eventoId }
@@ -83,6 +98,13 @@ export const cerrarEvento = async (req: Request, res: Response, next: NextFuncti
       });
 
       return { evento: eventoCerrado, transferencias };
+    });
+
+    broadcastTableUpdate(eventoId, {
+      action: 'MESA_CERRADA',
+      detalles: {
+        total_transferencias: resultado.transferencias.length
+      }
     });
 
     res.status(201).json({

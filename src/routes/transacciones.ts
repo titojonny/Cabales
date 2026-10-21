@@ -5,7 +5,11 @@ import { assertParamId } from '../middlewares/assertParamId.js';
 import { actualizarEstadoTransaccionSchema } from '../validators/transacciones.js';
 import { uploadComprobante } from '../config/upload.js';
 
+import { optionalAuth } from '../middlewares/auth.js';
+
 const router = Router();
+
+router.use(optionalAuth);
 
 // Subir imagen de captura bancaria como comprobante de pago
 router.post(

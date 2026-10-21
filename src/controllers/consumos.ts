@@ -9,6 +9,7 @@ import {
   agregarPropinaSchema
 } from '../validators/consumos.js';
 import { repartirCentavosExactos } from '../utils/money.js';
+import { broadcastTableUpdate } from '../socket.js';
 
 type CuerpoConsumo = z.infer<typeof crearConsumoSchema>;
 type CuerpoActualizarConsumo = z.infer<typeof actualizarConsumoSchema>;
@@ -84,6 +85,15 @@ export const registrarConsumo = async (
       });
 
       return consumo;
+    });
+
+    broadcastTableUpdate(evento_id, {
+      action: 'CONSUMO_CREADO',
+      detalles: {
+        id: nuevoConsumo.id,
+        descripcion: nuevoConsumo.descripcion,
+        monto_centavos
+      }
     });
 
     res.status(201).json({
@@ -267,6 +277,15 @@ export const actualizarConsumo = async (
       return updated;
     });
 
+    broadcastTableUpdate(eventoId, {
+      action: 'CONSUMO_MODIFICADO',
+      detalles: {
+        id: consumoActualizado.id,
+        descripcion: consumoActualizado.descripcion,
+        monto_centavos
+      }
+    });
+
     res.json({
       success: true,
       message: 'Consumo actualizado',
@@ -305,6 +324,17 @@ export const eliminarConsumo = async (
       throw new HttpError(404, 'El consumo no existe en este evento');
     }
 
+    const usuarioId = (req.user?.id || req.headers['x-user-id']) as string | undefined;
+    const isCreadorDirecto = req.evento!.creador_id === usuarioId;
+    const isCreadorPorEmail =
+      !!req.user?.email &&
+      !!req.evento?.creador?.email &&
+      req.user.email.toLowerCase() === req.evento.creador.email.toLowerCase();
+
+    if (usuarioId && !isCreadorDirecto && !isCreadorPorEmail) {
+      throw new HttpError(403, 'Solo el organizador de la mesa puede eliminar consumos');
+    }
+
     await prisma.$transaction(async (tx) => {
       // Revertir montos a cada comensal
       for (const cp of consumo.participantes) {
@@ -324,6 +354,11 @@ export const eliminarConsumo = async (
       await tx.consumo.delete({
         where: { id: consumoId }
       });
+    });
+
+    broadcastTableUpdate(eventoId, {
+      action: 'CONSUMO_ELIMINADO',
+      detalles: { id: consumoId }
     });
 
     res.json({
@@ -419,6 +454,15 @@ export const agregarPropina = async (
       });
 
       return consumo;
+    });
+
+    broadcastTableUpdate(eventoId, {
+      action: 'PROPINA_AGREGADA',
+      detalles: {
+        id: consumoPropina.id,
+        monto_centavos: propinaCentavos,
+        porcentaje
+      }
     });
 
     res.status(201).json({

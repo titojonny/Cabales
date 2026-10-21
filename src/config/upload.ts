@@ -6,7 +6,7 @@ const storage = multer.memoryStorage();
 
 const fileFilter: multer.Options['fileFilter'] = (_req, file, cb) => {
   const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'image/jpg'];
-  if (allowedMimes.includes(file.mimetype) || file.mimetype.startsWith('image/')) {
+  if (allowedMimes.includes(file.mimetype.toLowerCase())) {
     cb(null, true);
   } else {
     cb(new HttpError(400, 'Solo se permiten imágenes (JPG, PNG, WEBP, HEIC, etc.)'));

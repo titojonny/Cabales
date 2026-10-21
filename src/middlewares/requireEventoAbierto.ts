@@ -4,10 +4,14 @@ import { prisma } from '../config/prisma.js';
 import { HttpError } from './errorHandler.js';
 import { assertParamId } from './assertParamId.js';
 
+type EventoConCreador = Evento & {
+  creador?: { id: string; nombre: string; email: string; avatar_url: string | null } | null;
+};
+
 declare global {
   namespace Express {
     interface Request {
-      evento?: Evento;
+      evento?: EventoConCreador;
     }
   }
 }
@@ -22,7 +26,14 @@ export const requireEventoAbierto = async (
   try {
     const eventoId = assertParamId(req.params.id, 'evento');
 
-    const evento = await prisma.evento.findUnique({ where: { id: eventoId } });
+    const evento = await prisma.evento.findUnique({
+      where: { id: eventoId },
+      include: {
+        creador: {
+          select: { id: true, nombre: true, email: true, avatar_url: true }
+        }
+      }
+    });
     if (!evento) {
       throw new HttpError(404, 'El evento no existe');
     }

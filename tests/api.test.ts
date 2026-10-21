@@ -77,6 +77,44 @@ describe('Flujo relacional de Cabales', () => {
     expect(res.status).toBe(204);
     expect(res.headers['access-control-allow-origin']).toBe('capacitor://localhost');
   });
+
+  it('DELETE /api/events/:id elimina la mesa si el usuario es el creador', async () => {
+    // 1. Crear evento
+    const createRes = await request(app)
+      .post('/api/events')
+      .send({ nombre: 'Mesa temporal a borrar', creador_id: userId, auto_incluir_creador: true });
+    expect(createRes.status).toBe(201);
+    const eventId = createRes.body.data.id;
+
+    // 2. Intentar borrar sin autenticación
+    const unauthRes = await request(app).delete(`/api/events/${eventId}`);
+    expect(unauthRes.status).toBe(401);
+
+    // 3. Intentar borrar con otro usuario
+    const otherUser = await prisma.usuario.create({
+      data: {
+        nombre: 'Otro Usuario',
+        email: `otro-${Date.now()}@example.com`
+      }
+    });
+    const forbiddenRes = await request(app)
+      .delete(`/api/events/${eventId}`)
+      .set('x-user-id', otherUser.id);
+    expect(forbiddenRes.status).toBe(403);
+
+    // 4. Borrar exitosamente con el creador
+    const deleteRes = await request(app)
+      .delete(`/api/events/${eventId}`)
+      .set('x-user-id', userId);
+    expect(deleteRes.status).toBe(200);
+    expect(deleteRes.body.success).toBe(true);
+
+    // 5. Verificar que ya no existe
+    const getRes = await request(app).get(`/api/events/${eventId}`);
+    expect(getRes.status).toBe(404);
+
+    await prisma.usuario.delete({ where: { id: otherUser.id } });
+  });
 });
 
 afterAll(async () => {

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { registrarPago } from '../controllers/pagos.js';
 import { obtenerTransaccionesDeEvento } from '../controllers/transacciones.js';
 import { cerrarEvento } from '../controllers/cierre.js';
-import { obtenerEventoDetalle, crearEvento } from '../controllers/eventos.js';
+import { obtenerEventoDetalle, crearEvento, eliminarEvento } from '../controllers/eventos.js';
 import {
   registrarConsumo,
   obtenerConsumosDeEvento,
@@ -10,7 +10,7 @@ import {
   eliminarConsumo,
   agregarPropina
 } from '../controllers/consumos.js';
-import { agregarParticipante, reclamarParticipante } from '../controllers/participantes.js';
+import { agregarParticipante, reclamarParticipante, eliminarParticipante } from '../controllers/participantes.js';
 import { validateBody } from '../middlewares/validateBody.js';
 import { requireEventoAbierto } from '../middlewares/requireEventoAbierto.js';
 import { assertParamId } from '../middlewares/assertParamId.js';
@@ -23,13 +23,21 @@ import {
 import { agregarParticipanteSchema, reclamarParticipanteSchema } from '../validators/participantes.js';
 import { crearEventoSchema } from '../validators/schemas.js';
 
+import { optionalAuth, requireAuth } from '../middlewares/auth.js';
+
 const router = Router();
+
+// Aplicar autenticación opcional a todas las rutas de eventos para que req.user esté disponible si envían token o x-user-id
+router.use(optionalAuth);
 
 // Crear un evento nuevo
 router.post('/events', validateBody(crearEventoSchema), crearEvento);
 
 // Detalle de un evento (radiografía de la mesa)
 router.get('/events/:id', assertParamId('evento'), obtenerEventoDetalle);
+
+// Eliminar un evento completo (solo organizador creador)
+router.delete('/events/:id', assertParamId('evento'), requireAuth, eliminarEvento);
 
 // Agregar un comensal a la mesa (usuario registrado o invitado fantasma)
 router.post(
@@ -38,6 +46,14 @@ router.post(
   requireEventoAbierto,
   validateBody(agregarParticipanteSchema),
   agregarParticipante
+);
+
+// Eliminar un comensal de la mesa (solo organizador)
+router.delete(
+  '/events/:id/participants/:participantId',
+  assertParamId('evento'),
+  requireEventoAbierto,
+  eliminarParticipante
 );
 
 // Reclamar un lugar de comensal en la mesa (vincular a usuario registrado)

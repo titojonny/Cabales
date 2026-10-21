@@ -1,10 +1,11 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
 const connectionString =
   process.env.DATABASE_URL ||
-  'postgresql://cabales_user:cabales_secret@localhost:5434/cabales_db?schema=public';
+  'postgresql://cabales_user:cabales_secret@localhost:5432/cabales_db?schema=public';
 
 export const pool = new pg.Pool({
   connectionString,

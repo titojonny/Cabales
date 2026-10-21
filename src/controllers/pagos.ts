@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { HttpError } from '../middlewares/errorHandler.js';
 import { registrarPagoSchema } from '../validators/pagos.js';
+import { broadcastTableUpdate } from '../socket.js';
 
 type CuerpoPago = z.infer<typeof registrarPagoSchema>;
 
@@ -20,11 +21,27 @@ export const registrarPago = async (req: Request, res: Response, next: NextFunct
       throw new HttpError(400, 'El participante no pertenece a este evento');
     }
 
+    const usuarioId = (req.user?.id || req.headers['x-user-id']) as string | undefined;
+    if (usuarioId && req.evento!.creador_id !== usuarioId) {
+      if (participante.usuario_id !== usuarioId) {
+        throw new HttpError(403, 'Como comensal solo puedes registrar abonos a tu propia cuenta');
+      }
+    }
+
     const actualizado = await prisma.$transaction(async (tx) => {
       return tx.participante.update({
         where: { id: participante_id },
         data: { monto_pagado_centavos: { increment: monto_centavos } }
       });
+    });
+
+    broadcastTableUpdate(eventoId, {
+      action: 'ABONO_REGISTRADO',
+      detalles: {
+        participanteId: participante_id,
+        monto_centavos,
+        total_pagado: actualizado.monto_pagado_centavos
+      }
     });
 
     res.status(201).json({

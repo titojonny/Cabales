@@ -11,7 +11,11 @@ type CuerpoEvento = z.infer<typeof crearEventoSchema>;
 // Crear un evento nuevo
 export const crearEvento = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { nombre, creador_id, auto_incluir_creador } = req.body as CuerpoEvento;
+    const { nombre, auto_incluir_creador } = req.body as CuerpoEvento;
+    const creador_id = req.user?.id || (req.body as CuerpoEvento).creador_id;
+    if (!creador_id) {
+      throw new HttpError(400, 'Se requiere un usuario creador');
+    }
 
     const creador = await prisma.usuario.findUnique({ where: { id: creador_id } });
     if (!creador) {
@@ -53,10 +57,10 @@ export const obtenerEventoDetalle = async (req: Request, res: Response, next: Ne
     const evento = await prisma.evento.findUnique({
       where: { id: eventoId },
       include: {
-        creador: { select: { id: true, nombre: true, avatar_url: true } },
+        creador: { select: { id: true, nombre: true, email: true, avatar_url: true } },
         participantes: {
           orderBy: { monto_consumido_centavos: 'desc' },
-          include: { usuario: { select: { id: true, nombre: true, avatar_url: true } } }
+          include: { usuario: { select: { id: true, nombre: true, email: true, avatar_url: true } } }
         },
         transacciones: {
           select: {
@@ -124,6 +128,63 @@ export const obtenerEventoDetalle = async (req: Request, res: Response, next: Ne
     };
 
     res.status(200).json({ success: true, message: 'Evento obtenido', data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Eliminar un evento completo (mesa cancelada o creada por error)
+export const eliminarEvento = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const eventoId = assertParamId(req.params.id, 'evento');
+    const usuarioActualId = req.user?.id || (req.headers['x-user-id'] as string | undefined);
+
+    if (!usuarioActualId) {
+      throw new HttpError(401, 'No autenticado. Debes iniciar sesión para eliminar una mesa.');
+    }
+
+    const evento = await prisma.evento.findUnique({
+      where: { id: eventoId },
+      include: {
+        creador: true
+      }
+    });
+
+    if (!evento) {
+      throw new HttpError(404, 'La mesa no existe');
+    }
+
+    // Verificar si es el creador/organizador
+    const esCreador =
+      evento.creador_id === usuarioActualId ||
+      (!!req.user?.email && evento.creador.email === req.user.email);
+
+    if (!esCreador) {
+      throw new HttpError(403, 'Solo el creador u organizador de la mesa puede eliminarla');
+    }
+
+    // Borrado atómico de todas las dependencias
+    await prisma.$transaction(async (tx) => {
+      // 1. Eliminar transacciones
+      await tx.transaccion.deleteMany({ where: { evento_id: eventoId } });
+      // 2. Eliminar desgloses de consumos por participante
+      await tx.consumoParticipante.deleteMany({
+        where: { participante: { evento_id: eventoId } }
+      });
+      // 3. Eliminar consumos
+      await tx.consumo.deleteMany({ where: { evento_id: eventoId } });
+      // 4. Eliminar invitaciones de mesa
+      await tx.invitacionMesa.deleteMany({ where: { evento_id: eventoId } });
+      // 5. Eliminar participantes
+      await tx.participante.deleteMany({ where: { evento_id: eventoId } });
+      // 6. Eliminar el evento
+      await tx.evento.delete({ where: { id: eventoId } });
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Mesa eliminada exitosamente'
+    });
   } catch (error) {
     next(error);
   }

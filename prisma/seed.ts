@@ -4,7 +4,8 @@ async function main() {
   console.log('🌱 Sembrando datos iniciales en PostgreSQL...');
 
   const usuarios = [
-    { nombre: 'Jonathan', email: 'jonathan@cabales.app', avatar_url: null },
+    { nombre: 'Jonathan', email: 'adonayjonathan1028@gmail.com', avatar_url: null },
+    { nombre: 'Laura', email: 'laura@gmail.com', avatar_url: null },
     { nombre: 'Carlos', email: 'carlos@cabales.app', avatar_url: null },
     { nombre: 'Sofía', email: 'sofia@cabales.app', avatar_url: null },
     { nombre: 'Kevin', email: 'kevin@cabales.app', avatar_url: null },

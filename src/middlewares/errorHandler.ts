@@ -37,6 +37,7 @@ export function errorHandler(error: unknown, req: Request, res: Response, next: 
   }
 
   if (error instanceof HttpError) {
+    console.error(`❌ [HttpError ${error.status}] ${req.method} ${req.originalUrl}: ${error.message}`);
     res.status(error.status).json({ success: false, message: error.message });
     return;
   }
