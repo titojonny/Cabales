@@ -111,14 +111,14 @@ export const DashboardPage: React.FC = () => {
 
   // Carga de invitaciones
   const loadInvitations = useCallback(async () => {
-    if (!currentUserId || isGuest) return;
+    if (!currentUserId) return;
     try {
       const invs = await cabalesApi.obtenerMisInvitaciones();
       setPendingInvitations(invs || []);
     } catch {
       // ignore
     }
-  }, [currentUserId, isGuest]);
+  }, [currentUserId]);
 
   useEffect(() => {
     if (isLoggedIn && currentUserId) {

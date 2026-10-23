@@ -71,6 +71,12 @@ export const obtenerEventoDetalle = async (req: Request, res: Response, next: Ne
             estado: true
           }
         },
+        invitaciones: {
+          where: { estado: 'PENDIENTE' },
+          include: {
+            invitado: { select: { id: true, nombre: true, email: true, avatar_url: true } }
+          }
+        },
         _count: { select: { participantes: true, transacciones: true } }
       }
     });
@@ -98,6 +104,13 @@ export const obtenerEventoDetalle = async (req: Request, res: Response, next: Ne
       esta_totalmente_saldado: estaTotalmenteSaldado,
       creador: evento.creador,
       transacciones: evento.transacciones,
+      invitaciones_pendientes: ((evento as any).invitaciones || []).map((inv: any) => ({
+        id: inv.id,
+        invitado_id: inv.invitado_id,
+        nombre: inv.invitado?.nombre || 'Invitado',
+        avatar_url: inv.invitado?.avatar_url || null,
+        creado_en: inv.creado_en
+      })),
       participantes: evento.participantes.map((participante) => {
         const txsDeudor = evento.transacciones.filter((t) => t.deudor_id === participante.id);
         const txsAcreedor = evento.transacciones.filter((t) => t.acreedor_id === participante.id);

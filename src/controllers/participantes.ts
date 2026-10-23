@@ -50,17 +50,9 @@ export const agregarParticipante = async (req: Request, res: Response, next: Nex
       }
     }
 
-    // Regla de Auto-ingreso: Nadie se sienta sin invitación excepto el organizador
+    // Si el usuario se sienta a sí mismo (vía QR / enlace directo o aceptando invitación)
     if (isSelfJoin && usuarioId) {
-      const isCreadorDirecto =
-        req.evento!.creador_id === usuarioId ||
-        (!!headerUserId && req.evento!.creador_id === headerUserId);
-      const isCreadorPorEmail =
-        !!req.user?.email &&
-        !!req.evento?.creador?.email &&
-        req.user.email.toLowerCase() === req.evento.creador.email.toLowerCase();
-
-      if (!isCreadorDirecto && !isCreadorPorEmail) {
+      try {
         const invitacionValida = await prisma.invitacionMesa.findUnique({
           where: {
             evento_id_invitado_id: {
@@ -70,20 +62,13 @@ export const agregarParticipante = async (req: Request, res: Response, next: Nex
           }
         });
 
-        if (!invitacionValida) {
-          throw new HttpError(
-            403,
-            'No tienes una invitación activa para sentarte en esta mesa. Pídele al anfitrión que te invite con tu código de amigo.'
-          );
-        }
-
-        if (invitacionValida.estado === 'PENDIENTE') {
+        if (invitacionValida && invitacionValida.estado === 'PENDIENTE') {
           await prisma.invitacionMesa.update({
             where: { id: invitacionValida.id },
             data: { estado: 'ACEPTADA' }
           });
         }
-      }
+      } catch {}
     }
 
     // FLUJO 1: Invitación a amigo registrado mediante CÓDIGO DE AMIGO (8 caracteres)
@@ -93,16 +78,13 @@ export const agregarParticipante = async (req: Request, res: Response, next: Nex
         throw new HttpError(400, 'El código de amigo debe tener 8 caracteres');
       }
 
-      // Buscar ÚNICAMENTE por ID exacto o prefijo de ID (código de 8 caracteres del usuario)
+      // Buscar por ID exacto o prefijo de ID (código de 8 caracteres del usuario)
       const amigo = await prisma.usuario.findFirst({
         where: {
           OR: [
             { id: query },
             { id: { startsWith: query } }
-          ],
-          NOT: {
-            email: { contains: '@guest.cabales.app' }
-          }
+          ]
         }
       });
 

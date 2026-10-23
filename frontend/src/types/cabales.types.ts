@@ -88,6 +88,13 @@ export interface EventoDetalleDTO {
     avatar_url: string | null;
   };
   participantes: ParticipanteDetalleDTO[];
+  invitaciones_pendientes?: {
+    id: string;
+    invitado_id: string;
+    nombre: string;
+    avatar_url: string | null;
+    creado_en: string;
+  }[];
 }
 
 export interface ParticipanteDTO {

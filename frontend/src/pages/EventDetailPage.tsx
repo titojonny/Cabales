@@ -277,6 +277,25 @@ export const EventDetailPage: React.FC = () => {
     }
   };
 
+  // Unirse a la mesa directamente (vía QR o link)
+  const handleJoinTable = async () => {
+    if (!eventId) return;
+    if (!currentUserId) {
+      setIsClaimModalOpen(true);
+      return;
+    }
+    setIsClaiming(true);
+    try {
+      await cabalesApi.agregarParticipante(eventId, { usuario_id: currentUserId });
+      showToast('¡Te has sentado a la mesa exitosamente!', 'success');
+      await loadEventData();
+    } catch (err: any) {
+      showToast(err.message || 'Error al unirse a la mesa', 'error');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
   // Reclamar asiento
   const handleClaimSeat = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -856,78 +875,57 @@ export const EventDetailPage: React.FC = () => {
                 </button>
               </div>
             </div>
-          ) : isLoggedIn ? (
-            <div
-              className="glass-card"
-              style={{
-                padding: '16px',
-                marginBottom: '16px',
-                border: '1px solid rgba(113, 119, 109, 0.25)',
-                background: 'linear-gradient(135deg, rgba(30, 36, 30, 0.8) 0%, rgba(18, 22, 18, 0.95) 100%)'
-              }}
-            >
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    color: 'var(--cabales-gray)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  <Lock size={18} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 4px', color: 'var(--cabales-offwhite)' }}>
-                    Mesa Privada
-                  </h4>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--cabales-gray)', margin: '0 0 10px', lineHeight: 1.4 }}>
-                    Para sentarte en esta mesa, pídele al anfitrión que te invite usando tu Código de Amigo:
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <code style={{ background: 'rgba(0,0,0,0.5)', padding: '6px 12px', borderRadius: '6px', fontSize: '0.95rem', fontWeight: 800, color: 'var(--cabales-green-primary)', letterSpacing: '0.08em' }}>
-                      {currentUserId ? currentUserId.slice(0, 8).toUpperCase() : '------'}
-                    </code>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                      onClick={async () => {
-                        if (!currentUserId) return;
-                        const ok = await copiarTextoAlPortapapeles(currentUserId.slice(0, 8).toUpperCase());
-                        if (ok) showToast('Código de amigo copiado', 'success');
-                      }}
-                    >
-                      Copiar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           ) : (
             <div
               className="glass-card"
               style={{
-                padding: '16px',
+                padding: '18px',
                 marginBottom: '16px',
-                border: '1px solid rgba(77, 190, 85, 0.3)',
+                border: '1.5px solid var(--cabales-green-primary)',
+                background: 'linear-gradient(135deg, rgba(77, 190, 85, 0.15) 0%, rgba(20, 26, 20, 0.95) 100%)',
                 textAlign: 'center'
               }}
             >
-              <p style={{ fontSize: '0.86rem', color: 'var(--cabales-gray)', marginBottom: '12px', lineHeight: 1.4 }}>
-                Inicia sesión para recibir invitaciones o ver esta mesa
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Sparkles size={20} color="var(--cabales-green-primary)" />
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--cabales-offwhite)' }}>
+                  ¿Estás en la mesa? ¡Únete ahora!
+                </h4>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: 'var(--cabales-gray)', margin: '0 0 14px', lineHeight: 1.4 }}>
+                Únete a la mesa para que tu nombre aparezca entre los comensales, puedas ordenar tus platos y saldar tu cuenta exacta.
               </p>
-              <GoogleLoginButton
-                onSuccess={() => {
-                  showToast('¡Sesión iniciada!', 'success');
-                  loadEventData();
-                }}
-              />
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleJoinTable}
+                  disabled={isClaiming}
+                  style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}
+                >
+                  ⚡ Sentarme a la mesa como {currentUser?.nombre || 'Comensal'}
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => setIsClaimModalOpen(true)}
+                    style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}
+                  >
+                    ⚡ Escribir mi nombre y sentarme a la mesa
+                  </button>
+                  <div style={{ margin: '4px 0' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--cabales-gray)' }}>o ingresa con tu cuenta</span>
+                  </div>
+                  <GoogleLoginButton
+                    onSuccess={() => {
+                      showToast('¡Sesión iniciada!', 'success');
+                      loadEventData();
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )
         )}
@@ -1138,6 +1136,59 @@ export const EventDetailPage: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* Lista de Invitaciones Enviadas Pendientes */}
+            {evento.invitaciones_pendientes && evento.invitaciones_pendientes.length > 0 && (
+              <div style={{ marginTop: '16px' }}>
+                <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cabales-gray)', marginBottom: '8px' }}>
+                  ⏳ Invitaciones enviadas ({evento.invitaciones_pendientes.length})
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {evento.invitaciones_pendientes.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="glass-card"
+                      style={{
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        border: '1px dashed rgba(113, 119, 109, 0.4)',
+                        opacity: 0.85
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          ⏳
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--cabales-offwhite)' }}>
+                            {inv.nombre}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--cabales-gray)' }}>
+                            Invitación pendiente de aceptar
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: '4px', color: 'var(--cabales-gray)' }}>
+                        Esperando comensal
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Acción de Cierre de Mesa (Exclusivo si la mesa está ACTIVA) */}
             {evento.estado === 'ACTIVO' && (
