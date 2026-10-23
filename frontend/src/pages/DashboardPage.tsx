@@ -559,6 +559,28 @@ export const DashboardPage: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Pie Legal y Enlaces de Confianza */}
+            <div style={{ textAlign: 'center', marginTop: '4px', padding: '0 8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '14px', fontSize: '0.76rem', color: 'var(--cabales-slate)', marginBottom: '6px' }}>
+                <span
+                  onClick={() => navigate('/terms')}
+                  style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Términos y Condiciones
+                </span>
+                <span>•</span>
+                <span
+                  onClick={() => navigate('/privacy')}
+                  style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Política de Privacidad
+                </span>
+              </div>
+              <p style={{ color: 'rgba(113, 119, 109, 0.7)', fontSize: '0.72rem', margin: 0 }}>
+                © 2026 Cabales. Cero almacenamiento de tarjetas bancarias.
+              </p>
+            </div>
           </div>
         ) : mainView === 'FINANZAS' ? (
           /* VISTA DE FINANZAS PERSONALES Y CONTROL DE DEUDAS */
@@ -1113,7 +1135,32 @@ export const DashboardPage: React.FC = () => {
             </div>
 
 
-            <div style={{ textAlign: 'center', paddingTop: '8px' }}>
+            {/* Enlaces Legales */}
+            <div style={{ textAlign: 'center', paddingTop: '10px', paddingBottom: '6px', borderTop: '1px solid rgba(113, 119, 109, 0.2)' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', fontSize: '0.78rem', color: 'var(--cabales-gray)' }}>
+                <span
+                  onClick={() => {
+                    setIsUserModalOpen(false);
+                    navigate('/terms');
+                  }}
+                  style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Términos de Uso
+                </span>
+                <span style={{ color: 'var(--cabales-slate)' }}>•</span>
+                <span
+                  onClick={() => {
+                    setIsUserModalOpen(false);
+                    navigate('/privacy');
+                  }}
+                  style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Política de Privacidad
+                </span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', paddingTop: '4px' }}>
               <button
                 type="button"
                 onClick={handleLogout}
