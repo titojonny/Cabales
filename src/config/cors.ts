@@ -24,12 +24,23 @@ export const corsOptions: CorsOptions = {
       return callback(null, true);
     }
 
+    // Si FRONTEND_URL es * o contiene comodín, permitir cualquier origen reflejado
+    if (process.env.FRONTEND_URL === '*' || (process.env.FRONTEND_URL && process.env.FRONTEND_URL.includes('*'))) {
+      return callback(null, true);
+    }
+
+    // Permitir cualquier subdominio oficial de Vercel (*.vercel.app)
+    if (/^https:\/\/[a-zA-Z0-9-_]+\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
     // Orígenes configurados en variables de entorno (soporta lista separada por comas)
     const envOrigins = process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL.split(',').map((url) => url.trim())
+      ? process.env.FRONTEND_URL.split(',').map((url) => url.trim().replace(/\/$/, ''))
       : [];
 
-    if (ALLOWED_ORIGINS.includes(origin) || envOrigins.includes(origin)) {
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    if (ALLOWED_ORIGINS.includes(normalizedOrigin) || envOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
 
