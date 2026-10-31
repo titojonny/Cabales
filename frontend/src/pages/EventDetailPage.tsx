@@ -645,7 +645,7 @@ export const EventDetailPage: React.FC = () => {
             background: 'linear-gradient(135deg, rgba(33, 38, 32, 0.95) 0%, rgba(20, 26, 20, 0.95) 100%)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
             <div>
               <span style={{ fontSize: '0.78rem', color: 'var(--cabales-gray)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Radiografía de Mesa
@@ -655,7 +655,7 @@ export const EventDetailPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
               {isOrganizer && (
                 <button
                   type="button"
@@ -720,9 +720,9 @@ export const EventDetailPage: React.FC = () => {
 
           {/* Tablero de 3 Cifras Financieras */}
           <div
+            className="kpi-three-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '8px',
               background: 'rgba(0, 0, 0, 0.28)',
               border: '1px solid var(--border-card)',
@@ -1024,14 +1024,15 @@ export const EventDetailPage: React.FC = () => {
 
                 return (
                   <div key={p.id} className="glass-card" style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       {/* Avatar e Identidad */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
                         <div
                           style={{
                             width: '36px',
                             height: '36px',
                             borderRadius: '50%',
+                            flexShrink: 0,
                             background: isDeudor
                               ? 'rgba(239, 68, 68, 0.2)'
                               : isCreditor
@@ -1057,9 +1058,9 @@ export const EventDetailPage: React.FC = () => {
                           {p.es_fantasma ? '👻' : p.nombre_visible.charAt(0).toUpperCase()}
                         </div>
 
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--cabales-offwhite)' }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--cabales-offwhite)', wordBreak: 'break-word' }}>
                               {p.usuario_id === currentUserId ? `Tú (${p.nombre_visible})` : p.nombre_visible}
                             </span>
                             {p.usuario_id === evento.creador.id && (
@@ -1080,7 +1081,7 @@ export const EventDetailPage: React.FC = () => {
                       </div>
 
                       {/* Pill de Balance */}
-                      <div>
+                      <div style={{ flexShrink: 0 }}>
                         {evento.estado === 'CERRADO' ? (
                           p.esta_saldado ? (
                             <span className="balance-pill credit">Saldado</span>

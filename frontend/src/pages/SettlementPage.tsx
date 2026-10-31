@@ -703,11 +703,11 @@ export const SettlementPage: React.FC = () => {
                               </div>
 
                               {puedeConfirmarPago ? (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                <div className="confirm-pago-grid" style={{ display: 'grid', gap: '8px' }}>
                                   <button
                                     type="button"
                                     className="btn-primary"
-                                    style={{ fontSize: '0.8rem', padding: '9px' }}
+                                    style={{ fontSize: '0.8rem', padding: '9px', width: '100%' }}
                                     onClick={() => advanceStatusDirect(t.id, 'COMPLETADO')}
                                   >
                                     <CheckCircle2 size={14} />
@@ -716,7 +716,7 @@ export const SettlementPage: React.FC = () => {
                                   <button
                                     type="button"
                                     className="btn-secondary"
-                                    style={{ fontSize: '0.8rem', padding: '9px', color: 'var(--debt-text)' }}
+                                    style={{ fontSize: '0.8rem', padding: '9px', color: 'var(--debt-text)', width: '100%' }}
                                     onClick={() => advanceStatusDirect(t.id, 'EN_DISPUTA')}
                                   >
                                     <AlertCircle size={14} />

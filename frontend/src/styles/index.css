@@ -556,7 +556,7 @@ button {
 /* Floating Action Button (FAB) */
 .fab-btn {
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   right: calc(50% - (var(--max-app-width) / 2) + 20px);
   width: 58px;
   height: 58px;
@@ -574,7 +574,7 @@ button {
 @media (max-width: 540px) {
   .fab-btn {
     right: 20px;
-    bottom: 24px;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -812,3 +812,51 @@ button {
 .keypad-btn.backspace-btn {
   color: var(--cabales-gray);
 }
+
+/* ==========================================================================
+   Mejoras de Responsividad para Móviles Pequeños y Pantallas Medianas
+   ========================================================================== */
+
+/* Grid de 3 KPIs en detalle de mesa */
+.kpi-three-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.confirm-pago-grid {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 380px) {
+  .kpi-three-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .confirm-pago-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .nav-center-title {
+    font-size: 0.95rem;
+    padding: 0 2px;
+  }
+
+  .header-inner {
+    gap: 4px;
+  }
+
+  .brand-title {
+    font-size: 1.25rem;
+    gap: 4px;
+  }
+
+  .brand-badge {
+    display: none; /* Ocultar insignia en anchos extremadamente reducidos para dar espacio al usuario */
+  }
+
+  .user-pill {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+}
+
