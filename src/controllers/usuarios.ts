@@ -4,7 +4,7 @@ import { prisma } from '../config/prisma.js';
 import { HttpError } from '../middlewares/errorHandler.js';
 import { assertParamId } from '../middlewares/assertParamId.js';
 import { Prisma } from '@prisma/client';
-import { crearUsuarioSchema } from '../validators/schemas.js';
+import { crearUsuarioSchema } from '../validators/usuarios.js';
 
 type CuerpoUsuario = z.infer<typeof crearUsuarioSchema>;
 

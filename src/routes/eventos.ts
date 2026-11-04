@@ -21,7 +21,7 @@ import {
   agregarPropinaSchema
 } from '../validators/consumos.js';
 import { agregarParticipanteSchema, reclamarParticipanteSchema } from '../validators/participantes.js';
-import { crearEventoSchema } from '../validators/schemas.js';
+import { crearEventoSchema } from '../validators/eventos.js';
 
 import { optionalAuth, requireAuth } from '../middlewares/auth.js';
 

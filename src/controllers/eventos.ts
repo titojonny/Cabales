@@ -4,7 +4,7 @@ import { prisma } from '../config/prisma.js';
 import { HttpError } from '../middlewares/errorHandler.js';
 import { assertParamId } from '../middlewares/assertParamId.js';
 import { Prisma } from '@prisma/client';
-import { crearEventoSchema } from '../validators/schemas.js';
+import { crearEventoSchema } from '../validators/eventos.js';
 
 type CuerpoEvento = z.infer<typeof crearEventoSchema>;
 

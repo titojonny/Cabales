@@ -13,7 +13,7 @@ import {
   crearUsuarioSchema,
   actualizarUsuarioSchema,
   reclamarEventosSchema
-} from '../validators/schemas.js';
+} from '../validators/usuarios.js';
 
 const router = Router();
 
