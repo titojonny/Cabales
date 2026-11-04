@@ -8,3 +8,4 @@ export const crearEventoSchema = z.object({
   creador_id: z.string({ message: 'El creador_id es obligatorio' }).uuid('El creador_id debe ser un UUID válido'),
   auto_incluir_creador: z.boolean().optional(),
 });
+

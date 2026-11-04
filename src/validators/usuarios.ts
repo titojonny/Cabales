@@ -29,3 +29,4 @@ export const reclamarEventosSchema = z
   .refine((data) => (data.event_ids && data.event_ids.length > 0) || !!data.guest_user_id, {
     message: 'Debes proporcionar event_ids o guest_user_id'
   });
+

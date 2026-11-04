@@ -41,6 +41,14 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { MoneyInput } from '../components/common/MoneyInput';
 import { Modal } from '../components/common/Modal';
 import { GoogleLoginButton } from '../components/common/GoogleLoginButton';
+import { InviteModal } from '../components/event-detail/InviteModal';
+import { ClaimModal } from '../components/event-detail/ClaimModal';
+import { AddParticipantModal } from '../components/event-detail/AddParticipantModal';
+import { ConsumoModal } from '../components/event-detail/ConsumoModal';
+import { TipModal } from '../components/event-detail/TipModal';
+import { PaymentModal } from '../components/event-detail/PaymentModal';
+import { CloseTableModal } from '../components/event-detail/CloseTableModal';
+import { DeleteTableModal } from '../components/event-detail/DeleteTableModal';
 
 export const EventDetailPage: React.FC = () => {
   const { id: eventId } = useParams<{ id: string }>();
@@ -1377,508 +1385,117 @@ export const EventDetailPage: React.FC = () => {
       </main>
 
       {/* MODAL: INVITAR QR & WHATSAPP */}
-      <Modal
+      <InviteModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        title="Invitar a la Mesa"
-      >
-        <div style={{ textAlign: 'center', padding: '10px 0' }}>
-          <p style={{ color: 'var(--cabales-gray)', fontSize: '0.85rem', marginBottom: '16px' }}>
-            Tus amigos pueden escanear este código QR para unirse y ver la cuenta en tiempo real:
-          </p>
-
-          {qrCodeDataUrl && (
-            <div
-              style={{
-                background: '#F1F1F1',
-                padding: '16px',
-                borderRadius: '16px',
-                display: 'inline-block',
-                marginBottom: '20px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
-              }}
-            >
-              <img src={qrCodeDataUrl} alt="Código QR de la mesa" style={{ width: '220px', height: '220px', display: 'block' }} />
-            </div>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={handleShareInviteWhatsApp}
-              style={{ background: '#25D366', color: '#141F14' }}
-            >
-              <Share2 size={18} />
-              <span>Enviar Invitación por WhatsApp</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleCopyInviteLink}
-            >
-              <Copy size={16} />
-              <span>Copiar Enlace de la Mesa</span>
-            </button>
-          </div>
-        </div>
-      </Modal>
+        qrCodeDataUrl={qrCodeDataUrl}
+        onShareWhatsApp={handleShareInviteWhatsApp}
+        onCopyInviteLink={handleCopyInviteLink}
+      />
 
       {/* MODAL: RECLAMAR / SENTARSE EN LA MESA */}
-      <Modal
+      <ClaimModal
         isOpen={isClaimModalOpen}
         onClose={() => setIsClaimModalOpen(false)}
-        title="Sentarme a la Mesa"
-      >
-        <form onSubmit={handleClaimSeat}>
-          {!currentUserId && (
-            <div className="cabales-input-group">
-              <label className="cabales-label">¿Cómo te llamas?</label>
-              <input
-                type="text"
-                className="cabales-input"
-                placeholder="Ej. Jonathan"
-                value={claimNameInput}
-                onChange={(e) => setClaimNameInput(e.target.value)}
-                autoFocus
-              />
-            </div>
-          )}
-
-          {/* Si hay comensales fantasma disponibles */}
-          {evento.participantes.some((p) => p.es_fantasma) && (
-            <div style={{ marginBottom: '16px' }}>
-              <label className="cabales-label" style={{ display: 'block', marginBottom: '8px' }}>
-                ¿Ya te habían anotado como comensal invitado?
-              </label>
-              <select
-                className="cabales-input"
-                value={selectedGhostId}
-                onChange={(e) => setSelectedGhostId(e.target.value)}
-              >
-                <option value="">No, soy un comensal nuevo</option>
-                {evento.participantes
-                  .filter((p) => p.es_fantasma)
-                  .map((p) => (
-                    <option key={p.id} value={p.id}>
-                      👻 Reclamar asiento: {p.nombre_visible} ({centavosADinero(p.monto_consumido_centavos)})
-                    </option>
-                  ))}
-              </select>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={isClaiming || (!currentUserId && !claimNameInput.trim())}
-          >
-            {isClaiming ? 'Sentando...' : 'Confirmar y Entrar a la Mesa'}
-          </button>
-        </form>
-      </Modal>
+        currentUserId={currentUserId}
+        claimNameInput={claimNameInput}
+        onClaimNameChange={setClaimNameInput}
+        selectedGhostId={selectedGhostId}
+        onSelectGhostChange={setSelectedGhostId}
+        participantes={evento.participantes}
+        isClaiming={isClaiming}
+        onSubmit={handleClaimSeat}
+      />
 
       {/* MODAL: AGREGAR COMENSAL */}
-      <Modal
+      <AddParticipantModal
         isOpen={isAddParticipantModalOpen}
         onClose={() => setIsAddParticipantModalOpen(false)}
-        title="Agregar Comensal a la Mesa"
-      >
-        <form onSubmit={handleAddParticipant}>
-          {/* Selector de modo */}
-          <div className="segmented-control" style={{ marginBottom: '16px' }}>
-            <button
-              type="button"
-              className={`segment-btn ${addParticipantMode === 'GUEST' ? 'active' : ''}`}
-              onClick={() => setAddParticipantMode('GUEST')}
-            >
-              👤 Como Invitado
-            </button>
-            <button
-              type="button"
-              className={`segment-btn ${addParticipantMode === 'FRIEND' ? 'active' : ''}`}
-              onClick={() => setAddParticipantMode('FRIEND')}
-            >
-              🔑 Amigo Registrado
-            </button>
-          </div>
-
-          {addParticipantMode === 'GUEST' ? (
-            <div className="cabales-input-group">
-              <label className="cabales-label">Nombre del comensal invitado</label>
-              <input
-                type="text"
-                className="cabales-input"
-                placeholder="Ej. Andrés, Vale, Tía Claudia"
-                value={newParticipantName}
-                onChange={(e) => setNewParticipantName(e.target.value)}
-                autoFocus
-              />
-              <span style={{ fontSize: '0.74rem', color: 'var(--cabales-gray)', marginTop: '4px', display: 'block' }}>
-                Para amigos o familiares que no tienen la app ni cuenta en Cabales.
-              </span>
-            </div>
-          ) : (
-            <div className="cabales-input-group">
-              <label className="cabales-label">Código de Amigo (8 caracteres)</label>
-              <input
-                type="text"
-                className="cabales-input"
-                placeholder="Ej. 8B5501E9"
-                value={friendCodeInput}
-                onChange={(e) => setFriendCodeInput(e.target.value.toUpperCase())}
-                maxLength={8}
-                style={{ fontFamily: 'monospace', fontSize: '1.05rem', letterSpacing: '0.08em', fontWeight: 700 }}
-                autoFocus
-              />
-              <span style={{ fontSize: '0.74rem', color: 'var(--cabales-gray)', marginTop: '4px', display: 'block' }}>
-                Ingresa el código único de 8 caracteres de tu amigo (visible en su perfil). Le llegará una notificación en vivo para aceptar y sentarse.
-              </span>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={
-              isAddingParticipant ||
-              (addParticipantMode === 'GUEST' ? !newParticipantName.trim() : !friendCodeInput.trim())
-            }
-            style={{ marginTop: '16px' }}
-          >
-            {isAddingParticipant ? 'Agregando...' : 'Sentar Comensal en la Mesa'}
-          </button>
-        </form>
-      </Modal>
+        mode={addParticipantMode}
+        onModeChange={setAddParticipantMode}
+        guestName={newParticipantName}
+        onGuestNameChange={setNewParticipantName}
+        friendCode={friendCodeInput}
+        onFriendCodeChange={setFriendCodeInput}
+        isAdding={isAddingParticipant}
+        onSubmit={handleAddParticipant}
+      />
 
       {/* MODAL: AGREGAR / EDITAR CONSUMO */}
-      <Modal
+      <ConsumoModal
         isOpen={isConsumoModalOpen}
         onClose={() => setIsConsumoModalOpen(false)}
-        title={editingConsumoId ? 'Editar Consumo' : 'Nuevo Consumo'}
-      >
-        <form onSubmit={handleSaveConsumo}>
-          <div className="cabales-input-group">
-            <label className="cabales-label">Descripción</label>
-            <input
-              type="text"
-              className="cabales-input"
-              placeholder="Ej. Pizza Familiar, Rondas de Cerveza, Postre"
-              value={consumoDesc}
-              onChange={(e) => setConsumoDesc(e.target.value)}
-            />
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <label className="cabales-label" style={{ display: 'block', textAlign: 'center', marginBottom: '4px' }}>
-              Monto del Consumo
-            </label>
-            <MoneyInput
-              centavos={consumoCentavos}
-              onChange={setConsumoCentavos}
-            />
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label className="cabales-label" style={{ margin: 0 }}>
-                ¿Quiénes consumieron? ({selectedParticipantsForConsumo.length})
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedParticipantsForConsumo.length === evento.participantes.length) {
-                    setSelectedParticipantsForConsumo([]);
-                  } else {
-                    setSelectedParticipantsForConsumo(evento.participantes.map((p) => p.id));
-                  }
-                }}
-                style={{ fontSize: '0.74rem', color: 'var(--cabales-green-mint)', fontWeight: 700 }}
-              >
-                {selectedParticipantsForConsumo.length === evento.participantes.length
-                  ? 'Desmarcar todos'
-                  : 'Seleccionar todos'}
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '140px', overflowY: 'auto' }}>
-              {evento.participantes.map((p) => {
-                const isSelected = selectedParticipantsForConsumo.includes(p.id);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setSelectedParticipantsForConsumo((prev) => prev.filter((id) => id !== p.id));
-                      } else {
-                        setSelectedParticipantsForConsumo((prev) => [...prev, p.id]);
-                      }
-                    }}
-                    style={{
-                      background: isSelected ? 'rgba(77, 190, 85, 0.25)' : 'rgba(0, 0, 0, 0.3)',
-                      border: isSelected ? '1px solid var(--cabales-green-primary)' : '1px solid var(--border-card)',
-                      color: isSelected ? 'var(--cabales-green-mint)' : 'var(--cabales-offwhite)',
-                      padding: '6px 12px',
-                      borderRadius: 'var(--radius-full)',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
-                  >
-                    <span>{isSelected ? '✓' : '+'}</span>
-                    <span>{p.nombre_visible}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="btn-primary"
-            disabled={isSavingConsumo || consumoCentavos <= 0 || selectedParticipantsForConsumo.length === 0}
-          >
-            {isSavingConsumo
-              ? 'Guardando...'
-              : editingConsumoId
-              ? 'Actualizar Consumo'
-              : 'Anotar Consumo a la Cuenta'}
-          </button>
-        </form>
-      </Modal>
+        isEditing={!!editingConsumoId}
+        descripcion={consumoDesc}
+        onDescripcionChange={setConsumoDesc}
+        centavos={consumoCentavos}
+        onCentavosChange={setConsumoCentavos}
+        selectedParticipantIds={selectedParticipantsForConsumo}
+        onToggleParticipant={(id) => {
+          setSelectedParticipantsForConsumo((prev) =>
+            prev.includes(id) ? prev.filter((pId) => pId !== id) : [...prev, id]
+          );
+        }}
+        onSelectAllParticipants={() => {
+          setSelectedParticipantsForConsumo(evento.participantes.map((p) => p.id));
+        }}
+        onDeselectAllParticipants={() => {
+          setSelectedParticipantsForConsumo([]);
+        }}
+        participantes={evento.participantes}
+        isSaving={isSavingConsumo}
+        onSubmit={handleSaveConsumo}
+      />
 
       {/* MODAL: PROPINA */}
-      <Modal
+      <TipModal
         isOpen={isTipModalOpen}
         onClose={() => setIsTipModalOpen(false)}
-        title="Agregar Propina al Local"
-      >
-        <p style={{ color: 'var(--cabales-gray)', fontSize: '0.85rem', marginBottom: '16px' }}>
-          La propina se calculará sobre el total consumido y se dividirá de forma equitativa entre todos los comensales.
-        </p>
-
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
-          {[10, 15, 20].map((pct) => (
-            <button
-              key={pct}
-              type="button"
-              className={`quick-chip ${tipPercentage === pct ? 'active' : ''}`}
-              onClick={() => setTipPercentage(pct)}
-              style={{
-                fontSize: '1.05rem',
-                padding: '10px 18px',
-                background: tipPercentage === pct ? 'var(--cabales-green-primary)' : 'rgba(0,0,0,0.3)',
-                color: tipPercentage === pct ? '#141F14' : 'var(--cabales-offwhite)',
-                borderColor: tipPercentage === pct ? 'var(--cabales-green-primary)' : 'var(--border-card)'
-              }}
-            >
-              {pct}%
-            </button>
-          ))}
-        </div>
-
-        <div
-          style={{
-            background: 'rgba(0, 0, 0, 0.28)',
-            border: '1px solid var(--border-card)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px',
-            textAlign: 'center',
-            marginBottom: '20px'
-          }}
-        >
-          <span style={{ fontSize: '0.78rem', color: 'var(--cabales-gray)' }}>
-            Monto estimado de propina:
-          </span>
-          <div className="money-amount" style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--cabales-green-mint)', marginTop: '4px' }}>
-            {centavosADinero(Math.round((evento.total_gastado_centavos * tipPercentage) / 100))}
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleSaveTip}
-          disabled={isSavingTip || evento.total_gastado_centavos <= 0}
-        >
-          {isSavingTip ? 'Calculando propina...' : `Aplicar Propina del ${tipPercentage}%`}
-        </button>
-      </Modal>
+        tipPercentage={tipPercentage}
+        onTipPercentageChange={setTipPercentage}
+        totalGastadoCentavos={evento.total_gastado_centavos}
+        isSaving={isSavingTip}
+        onSubmit={handleSaveTip}
+      />
 
       {/* MODAL: REGISTRAR ABONO */}
-      <Modal
+      <PaymentModal
         isOpen={isPaymentModalOpen}
         onClose={() => setIsPaymentModalOpen(false)}
-        title="Registrar Abono al Local"
-      >
-        <p style={{ color: 'var(--cabales-gray)', fontSize: '0.85rem', marginBottom: '14px', textAlign: 'center' }}>
-          Indica quién pagó y cuánto dinero abonó directamente al restaurante:
-        </p>
-
-        <div className="cabales-input-group" style={{ marginBottom: '16px' }}>
-          <label className="cabales-label">Comensal que realiza el abono</label>
-          {isOrganizer ? (
-            <select
-              className="cabales-input"
-              value={payingParticipantId}
-              onChange={(e) => setPayingParticipantId(e.target.value)}
-            >
-              {evento?.participantes.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre_visible} {p.usuario_id === currentUserId ? '(Tú)' : ''}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <div
-              className="cabales-input"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid var(--border-card)',
-                color: 'var(--cabales-offwhite)'
-              }}
-            >
-              <span>👤 {myParticipant?.nombre_visible || 'Tú'}</span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--cabales-green-mint)', fontWeight: 600 }}>
-                Abono a tu propia cuenta
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div style={{ marginBottom: '16px' }}>
-          <label className="cabales-label" style={{ display: 'block', textAlign: 'center', marginBottom: '4px' }}>
-            Monto abonado
-          </label>
-          <MoneyInput
-            centavos={paymentCentavos}
-            onChange={setPaymentCentavos}
-          />
-        </div>
-
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleSavePayment}
-          disabled={isSavingPayment || paymentCentavos <= 0 || !payingParticipantId}
-          style={{ marginTop: '16px' }}
-        >
-          {isSavingPayment ? 'Registrando...' : 'Confirmar Abono'}
-        </button>
-      </Modal>
+        isOrganizer={isOrganizer}
+        participantes={evento.participantes}
+        payingParticipantId={payingParticipantId}
+        onPayingParticipantIdChange={setPayingParticipantId}
+        currentUserId={currentUserId}
+        myParticipantName={myParticipant?.nombre_visible}
+        paymentCentavos={paymentCentavos}
+        onPaymentCentavosChange={setPaymentCentavos}
+        isSaving={isSavingPayment}
+        onSubmit={handleSavePayment}
+      />
 
       {/* MODAL: CERRAR MESA CON PAGADOR RESTANTE */}
-      <Modal
+      <CloseTableModal
         isOpen={isCloseModalOpen}
         onClose={() => setIsCloseModalOpen(false)}
-        title="Conciliar y Cerrar Mesa"
-      >
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <div
-            style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.35)',
-              borderRadius: 'var(--radius-md)',
-              padding: '12px',
-              marginBottom: '16px'
-            }}
-          >
-            <span style={{ fontSize: '0.82rem', color: 'var(--debt-text)', fontWeight: 600 }}>
-              Faltan {centavosADinero(saldoPendienteCentavos)} para cubrir la factura del restaurante.
-            </span>
-          </div>
-
-          <p style={{ color: 'var(--cabales-gray)', fontSize: '0.86rem', lineHeight: 1.4, textAlign: 'left' }}>
-            ¿Quién pagó o puso su tarjeta para cubrir esta diferencia restante? El sistema le asignará saldo a favor y los demás le transferirán a él:
-          </p>
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <select
-            className="cabales-input"
-            value={selectedPayerId}
-            onChange={(e) => setSelectedPayerId(e.target.value)}
-          >
-            {evento.participantes.map((p) => (
-              <option key={p.id} value={p.id}>
-                💳 {p.nombre_visible} cubre el remanente
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={executeCloseTable}
-          disabled={isClosingTable || !selectedPayerId}
-        >
-          {isClosingTable ? 'Conciliando mesa...' : 'Cerrar Mesa y Liquidar Deudas'}
-        </button>
-      </Modal>
+        saldoPendienteCentavos={saldoPendienteCentavos}
+        participantes={evento.participantes}
+        selectedPayerId={selectedPayerId}
+        onSelectedPayerIdChange={setSelectedPayerId}
+        isClosing={isClosingTable}
+        onSubmit={executeCloseTable}
+      />
 
       {/* MODAL: CONFIRMAR ELIMINAR MESA */}
-      <Modal
+      <DeleteTableModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
           if (!isDeletingTable) setIsDeleteModalOpen(false);
         }}
-        title="¿Eliminar mesa?"
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div
-            style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: 'var(--radius-md)',
-              padding: '14px',
-              color: '#fca5a5',
-              fontSize: '0.88rem',
-              lineHeight: 1.5
-            }}
-          >
-            ¿Estás seguro de que deseas eliminar esta mesa (
-            <strong style={{ color: '#fff' }}>"{evento.nombre}"</strong>)?
-            <br />
-            Esta acción borrará la mesa permanentemente y desvinculará todos los consumos asociados.
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => setIsDeleteModalOpen(false)}
-              disabled={isDeletingTable}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              style={{
-                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                fontWeight: 700,
-                cursor: isDeletingTable ? 'not-allowed' : 'pointer',
-                padding: '10px 14px',
-                fontSize: '0.88rem'
-              }}
-              onClick={handleDeleteTable}
-              disabled={isDeletingTable}
-            >
-              {isDeletingTable ? 'Eliminando...' : 'Sí, eliminar mesa'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+        tableName={evento.nombre}
+        isDeleting={isDeletingTable}
+        onConfirm={handleDeleteTable}
+      />
     </div>
   );
 };
