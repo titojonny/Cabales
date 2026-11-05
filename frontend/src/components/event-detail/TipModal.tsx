@@ -82,3 +82,4 @@ export const TipModal: React.FC<TipModalProps> = ({
     </Modal>
   );
 };
+

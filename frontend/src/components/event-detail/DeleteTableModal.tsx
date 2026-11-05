@@ -73,3 +73,4 @@ export const DeleteTableModal: React.FC<DeleteTableModalProps> = ({
     </Modal>
   );
 };
+

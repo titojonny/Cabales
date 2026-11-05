@@ -63,3 +63,4 @@ export const InviteModal: React.FC<InviteModalProps> = ({
     </Modal>
   );
 };
+

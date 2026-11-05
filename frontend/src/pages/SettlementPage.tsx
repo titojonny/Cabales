@@ -28,6 +28,7 @@ import {
 import { centavosADinero } from '../utils/currency';
 import {
   generarMensajeCobroWhatsApp,
+  generarMensajeNotificacionPago,
   compartirTexto,
   copiarTextoAlPortapapeles
 } from '../utils/whatsapp';
@@ -225,6 +226,35 @@ export const SettlementPage: React.FC = () => {
     );
   }
 
+  const userEmailLower = currentUser?.email?.toLowerCase();
+
+  const isOrganizer =
+    !!currentUserId &&
+    !!evento &&
+    (evento.creador.id === currentUserId ||
+      (!!userEmailLower && (evento.creador as any).email?.toLowerCase() === userEmailLower));
+
+  const misCobrosPendientes = transactions.filter((t) => {
+    const soyAcreedor =
+      !!currentUserId &&
+      (t.acreedor.usuario_id === currentUserId ||
+        (!!userEmailLower && (t.acreedor as any).email?.toLowerCase() === userEmailLower));
+    return soyAcreedor && t.estado !== 'COMPLETADO';
+  });
+
+  const misDeudasPendientes = transactions.filter((t) => {
+    const soyDeudor =
+      !!currentUserId &&
+      (t.deudor.usuario_id === currentUserId ||
+        (!!userEmailLower && (t.deudor as any).email?.toLowerCase() === userEmailLower));
+    return soyDeudor && t.estado !== 'COMPLETADO';
+  });
+
+  const soyAcreedorEnMesa = misCobrosPendientes.length > 0;
+  const soySoloDeudor = !soyAcreedorEnMesa && misDeudasPendientes.length > 0;
+  const totalPorCobrarCentavos = misCobrosPendientes.reduce((acc, t) => acc + t.monto_centavos, 0);
+  const totalPorPagarCentavos = misDeudasPendientes.reduce((acc, t) => acc + t.monto_centavos, 0);
+
   return (
     <div className="mobile-app-wrapper">
       {/* Top Nav Bar */}
@@ -268,25 +298,60 @@ export const SettlementPage: React.FC = () => {
               </span>
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setIsWhatsAppModalOpen(true)}
-            style={{
-              background: '#25D366',
-              color: '#141F14',
-              border: 'none',
-              borderRadius: 'var(--radius-full)',
-              padding: '6px 12px',
-              fontSize: '0.78rem',
-              fontWeight: 800,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px'
-            }}
-          >
-            <Share2 size={13} />
-            <span>Cobrar</span>
-          </button>
+          {allCompleted ? (
+            <span
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: 'var(--cabales-green-mint)',
+                background: 'rgba(77, 190, 85, 0.15)',
+                padding: '4px 10px',
+                borderRadius: 'var(--radius-full)'
+              }}
+            >
+              Cabales
+            </span>
+          ) : soyAcreedorEnMesa ? (
+            <button
+              type="button"
+              onClick={() => setIsWhatsAppModalOpen(true)}
+              style={{
+                background: '#25D366',
+                color: '#141F14',
+                border: 'none',
+                borderRadius: 'var(--radius-full)',
+                padding: '6px 12px',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <Share2 size={13} />
+              <span>Cobrar</span>
+            </button>
+          ) : isOrganizer ? (
+            <button
+              type="button"
+              onClick={() => setIsWhatsAppModalOpen(true)}
+              style={{
+                background: 'rgba(77, 190, 85, 0.2)',
+                color: 'var(--cabales-green-mint)',
+                border: '1px solid var(--cabales-green-primary)',
+                borderRadius: 'var(--radius-full)',
+                padding: '6px 12px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <Share2 size={13} />
+              <span>Compartir</span>
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -332,48 +397,132 @@ export const SettlementPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Banner de Cobro WhatsApp Interactivo */}
-        <div
-          className="glass-card"
-          style={{
-            padding: '14px 16px',
-            marginBottom: '20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            cursor: 'pointer',
-            border: '1px solid rgba(37, 211, 102, 0.35)',
-            background: 'rgba(37, 211, 102, 0.08)'
-          }}
-          onClick={() => setIsWhatsAppModalOpen(true)}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                background: '#25D366',
-                color: '#141F14',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Share2 size={20} />
+        {/* Banner Contextual según Rol del Usuario */}
+        {!allCompleted && soyAcreedorEnMesa && (
+          <div
+            className="glass-card"
+            style={{
+              padding: '14px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer',
+              border: '1px solid rgba(37, 211, 102, 0.35)',
+              background: 'rgba(37, 211, 102, 0.08)'
+            }}
+            onClick={() => setIsWhatsAppModalOpen(true)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: '#25D366',
+                  color: '#141F14',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Share2 size={20} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, color: 'var(--cabales-offwhite)' }}>
+                  Cobrar mis {centavosADinero(totalPorCobrarCentavos)} por WhatsApp
+                </h4>
+                <p style={{ fontSize: '0.76rem', color: 'var(--cabales-gray)', margin: '2px 0 0' }}>
+                  Envía tus datos bancarios y el recordatorio a tus deudores
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, color: 'var(--cabales-offwhite)' }}>
-                Cobrar al Grupo por WhatsApp
-              </h4>
-              <p style={{ fontSize: '0.76rem', color: 'var(--cabales-gray)', margin: '2px 0 0' }}>
-                Envía el desglose de transferencias y tu cuenta bancaria
-              </p>
+            <ArrowRight size={18} color="var(--cabales-green-mint)" />
+          </div>
+        )}
+
+        {!allCompleted && soySoloDeudor && (
+          <div
+            className="glass-card"
+            style={{
+              padding: '14px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              background: 'rgba(239, 68, 68, 0.08)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  color: 'var(--debt-text)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <AlertCircle size={20} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, color: 'var(--cabales-offwhite)' }}>
+                  Debes {centavosADinero(totalPorPagarCentavos)} en esta mesa
+                </h4>
+                <p style={{ fontSize: '0.76rem', color: 'var(--cabales-gray)', margin: '2px 0 0' }}>
+                  Transfiere a tu acreedor y avísale por WhatsApp con el botón de abajo
+                </p>
+              </div>
             </div>
           </div>
+        )}
 
-          <ArrowRight size={18} color="var(--cabales-green-mint)" />
-        </div>
+        {!allCompleted && !soyAcreedorEnMesa && !soySoloDeudor && isOrganizer && (
+          <div
+            className="glass-card"
+            style={{
+              padding: '14px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer',
+              border: '1px solid rgba(77, 190, 85, 0.35)',
+              background: 'rgba(77, 190, 85, 0.08)'
+            }}
+            onClick={() => setIsWhatsAppModalOpen(true)}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(77, 190, 85, 0.2)',
+                  color: 'var(--cabales-green-mint)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Share2 size={20} />
+              </div>
+              <div>
+                <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, color: 'var(--cabales-offwhite)' }}>
+                  Compartir Resumen de la Mesa por WhatsApp
+                </h4>
+                <p style={{ fontSize: '0.76rem', color: 'var(--cabales-gray)', margin: '2px 0 0' }}>
+                  Envía el balance general a todos los participantes del grupo
+                </p>
+              </div>
+            </div>
+            <ArrowRight size={18} color="var(--cabales-green-mint)" />
+          </div>
+        )}
 
         {/* Listado de Transferencias Requeridas */}
         <div>
@@ -523,14 +672,18 @@ export const SettlementPage: React.FC = () => {
 
                       const acreedorEsFantasma = !t.acreedor.usuario_id;
                       const deudorEsFantasma = !t.deudor.usuario_id;
+                      const acreedorEsGuest = (t.acreedor as any).email?.toLowerCase()?.includes('@guest.cabales.app') || false;
+                      const deudorEsGuest = (t.deudor as any).email?.toLowerCase()?.includes('@guest.cabales.app') || false;
+                      const acreedorSinCuentaFija = acreedorEsFantasma || acreedorEsGuest;
+                      const deudorSinCuentaFija = deudorEsFantasma || deudorEsGuest;
 
                       // Regla de Permisos sin conflictos de intereses:
-                      // 1. Subir comprobante / notificar: el deudor, o el organizador si el deudor es invitado sin cuenta
-                      const puedeSubirComprobante = soyDeudor || (isOrganizer && deudorEsFantasma);
+                      // 1. Subir comprobante / notificar: el deudor, o el organizador si el deudor es invitado sin cuenta fija
+                      const puedeSubirComprobante = soyDeudor || (isOrganizer && deudorSinCuentaFija);
 
-                      // 2. Confirmar recepción: el acreedor (dueño del dinero), o el organizador si el acreedor es invitado sin cuenta
-                      // NUNCA si soy el deudor (el deudor no puede autovalidar su propio pago)
-                      const puedeConfirmarPago = (soyAcreedor || (isOrganizer && acreedorEsFantasma)) && !soyDeudor;
+                      // 2. Confirmar recepción: el acreedor (dueño del dinero), o el organizador si el acreedor es invitado sin cuenta fija
+                      // Si el acreedor no tiene cuenta fija (es invitado), el organizador puede confirmar aunque sea el deudor
+                      const puedeConfirmarPago = (soyAcreedor || (isOrganizer && acreedorSinCuentaFija)) && (!soyDeudor || acreedorSinCuentaFija);
 
                       return (
                         <div>
@@ -614,23 +767,57 @@ export const SettlementPage: React.FC = () => {
                                     <Upload size={14} />
                                     <span>Subir Comprobante de Transferencia</span>
                                   </button>
-                                  <button
-                                    type="button"
-                                    className="btn-secondary"
-                                    style={{
-                                      width: '100%',
-                                      fontSize: '0.78rem',
-                                      padding: '7px 12px',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      gap: '6px'
-                                    }}
-                                    onClick={() => advanceStatusDirect(t.id, 'EN_REVISION')}
-                                  >
-                                    <Clock size={13} />
-                                    <span>Ya transferí (Notificar a {t.acreedor.nombre_visible})</span>
-                                  </button>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button
+                                      type="button"
+                                      className="btn-secondary"
+                                      style={{
+                                        flex: 1,
+                                        fontSize: '0.78rem',
+                                        padding: '7px 10px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '5px'
+                                      }}
+                                      onClick={() => advanceStatusDirect(t.id, 'EN_REVISION')}
+                                    >
+                                      <Clock size={13} />
+                                      <span>Ya transferí</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      style={{
+                                        flex: 1,
+                                        background: '#25D366',
+                                        color: '#141F14',
+                                        border: 'none',
+                                        borderRadius: 'var(--radius-sm, 8px)',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 700,
+                                        padding: '7px 10px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '5px',
+                                        cursor: 'pointer'
+                                      }}
+                                      onClick={() => {
+                                        advanceStatusDirect(t.id, 'EN_REVISION');
+                                        const url = `${window.location.origin}/events/${evento.id}/settlement`;
+                                        const msg = generarMensajeNotificacionPago(
+                                          t.acreedor.nombre_visible,
+                                          t.monto_centavos,
+                                          evento.nombre,
+                                          url
+                                        );
+                                        compartirTexto(`Pago a ${t.acreedor.nombre_visible}`, msg);
+                                      }}
+                                    >
+                                      <Share2 size={13} />
+                                      <span>Avisar por WhatsApp</span>
+                                    </button>
+                                  </div>
                                 </div>
                               )}
 

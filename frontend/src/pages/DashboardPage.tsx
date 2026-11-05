@@ -609,20 +609,38 @@ export const DashboardPage: React.FC = () => {
               >
                 <div>
                   <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--cabales-offwhite)', display: 'block' }}>
-                    Estás en modo temporal
+                    👤 Modo Invitado ({currentUser?.nombre || 'Temporal'})
                   </span>
                   <span style={{ fontSize: '0.74rem', color: 'var(--cabales-gray)' }}>
-                    Crea tu cuenta para guardar tus cobros pendientes para siempre.
+                    Tus datos se guardan en este dispositivo.
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={() => setIsRegisterModalOpen(true)}
-                  style={{ width: 'auto', padding: '6px 12px', fontSize: '0.78rem', height: 'auto', flexShrink: 0 }}
-                >
-                  Crear Cuenta
-                </button>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => setIsRegisterModalOpen(true)}
+                    style={{ width: 'auto', padding: '6px 12px', fontSize: '0.78rem', height: 'auto' }}
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--debt-text)',
+                      fontSize: '0.76rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '4px',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    Salir
+                  </button>
+                </div>
               </div>
             )}
 

@@ -56,27 +56,44 @@ export function generarMensajeInvitacionMesa(evento: EventoDetalleDTO, urlMesa: 
 }
 
 /**
- * Abre WhatsApp con el mensaje codificado o usa el Web Share API si está en dispositivo móvil.
+ * Genera un mensaje para que el deudor le notifique a su acreedor que ya realizó la transferencia.
+ */
+export function generarMensajeNotificacionPago(
+  nombreAcreedor: string,
+  montoCentavos: number,
+  eventoNombre: string,
+  urlMesa?: string
+): string {
+  const monto = centavosADinero(montoCentavos);
+  let mensaje = `👋 ¡Hola ${nombreAcreedor}! Te escribo de *Cabales* 🇸🇻\n\n`;
+  mensaje += `💸 Ya te realicé la transferencia de *${monto}* correspondiente a mi parte en *${eventoNombre}*.\n`;
+  if (urlMesa) {
+    mensaje += `\n📲 Puedes verificar la mesa y confirmar la recepción aquí:\n${urlMesa}\n`;
+  }
+  mensaje += `\n¡Gracias! _Cuentas claras, amistades cabales._`;
+  return mensaje;
+}
+
+/**
+ * Abre directamente WhatsApp con el mensaje completo codificado sin pérdida por Web Share API.
  */
 export async function compartirTexto(titulo: string, texto: string): Promise<boolean> {
-  if (typeof navigator !== 'undefined' && navigator.share) {
+  const encoded = encodeURIComponent(texto);
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encoded}`;
+
+  if (typeof window !== 'undefined') {
     try {
-      await navigator.share({
-        title: titulo,
-        text: texto
-      });
+      const win = window.open(whatsappUrl, '_blank');
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        window.location.href = whatsappUrl;
+      }
       return true;
     } catch {
-      // Si el usuario canceló el share o falló, recurrir a WhatsApp Web / App
+      window.location.href = whatsappUrl;
+      return true;
     }
   }
 
-  const encoded = encodeURIComponent(texto);
-  const whatsappUrl = `https://api.whatsapp.com/send?text=${encoded}`;
-  if (typeof window !== 'undefined') {
-    window.open(whatsappUrl, '_blank');
-    return true;
-  }
   return false;
 }
 
@@ -140,4 +157,3 @@ export function generarMensajeRecordatorioDeuda(
   mensaje += `\n¡Gracias bro! _Cuentas claras, amistades cabales._`;
   return mensaje;
 }
-

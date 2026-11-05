@@ -94,28 +94,33 @@ export const actualizarEstadoTransaccion = async (req: Request, res: Response, n
         (!!userEmail && transaccion.evento.creador?.email?.toLowerCase() === userEmail);
 
       const acreedorEsFantasma = !transaccion.acreedor.usuario_id && !transaccion.acreedor.usuario;
-      const deudorEsFantasma = !transaccion.deudor.usuario_id && !transaccion.deudor.usuario;
+      const acreedorEsGuest = transaccion.acreedor.usuario?.email?.toLowerCase().includes('@guest.cabales.app') || false;
+      const acreedorSinCuentaFija = acreedorEsFantasma || acreedorEsGuest;
 
-      // El deudor NUNCA puede auto-confirmar el pago de su propia deuda.
+      const deudorEsFantasma = !transaccion.deudor.usuario_id && !transaccion.deudor.usuario;
+      const deudorEsGuest = transaccion.deudor.usuario?.email?.toLowerCase().includes('@guest.cabales.app') || false;
+      const deudorSinCuentaFija = deudorEsFantasma || deudorEsGuest;
+
+      // El deudor no puede auto-confirmar si el acreedor tiene cuenta permanente/registrada.
       if (nuevoEstado === 'COMPLETADO' || nuevoEstado === 'EN_DISPUTA') {
-        if (soyDeudor) {
+        if (soyDeudor && !soyAcreedor && !acreedorSinCuentaFija) {
           throw new HttpError(
             403,
             'El deudor no puede auto-marcar la deuda como completada. Solo la persona a quien le debes (el acreedor o prestamista) puede validar la recepción del dinero.'
           );
         }
 
-        const puedeConfirmar = soyAcreedor || (soyOrganizador && acreedorEsFantasma);
+        const puedeConfirmar = soyAcreedor || (soyOrganizador && acreedorSinCuentaFija);
         if (!puedeConfirmar) {
           throw new HttpError(
             403,
-            'Solo la persona a quien le deben dinero (acreedor o prestamista) puede confirmar o disputar este pago.'
+            'Solo la persona a quien le deben dinero (acreedor o prestamista) o el organizador (en caso de invitados sin cuenta fija) puede confirmar o disputar este pago.'
           );
         }
       }
 
       if (nuevoEstado === 'EN_REVISION') {
-        const puedeEnviarRevision = soyDeudor || (soyOrganizador && deudorEsFantasma);
+        const puedeEnviarRevision = soyDeudor || (soyOrganizador && deudorSinCuentaFija);
         if (!puedeEnviarRevision) {
           throw new HttpError(403, 'Solo el deudor de esta deuda puede enviar comprobante a revisión.');
         }

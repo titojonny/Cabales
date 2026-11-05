@@ -53,7 +53,7 @@ import { DeleteTableModal } from '../components/event-detail/DeleteTableModal';
 export const EventDetailPage: React.FC = () => {
   const { id: eventId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentUser, currentUserId, isLoggedIn, isGuest, registerOrLogin, trackGuestEvent } = useAuth();
+  const { currentUser, currentUserId, isLoggedIn, isGuest, registerOrLogin, trackGuestEvent, logout } = useAuth();
   const { showToast } = useToast();
 
   const [evento, setEvento] = useState<EventoDetalleDTO | null>(null);
@@ -904,15 +904,37 @@ export const EventDetailPage: React.FC = () => {
                 Únete a la mesa para que tu nombre aparezca entre los comensales, puedas ordenar tus platos y saldar tu cuenta exacta.
               </p>
               {isLoggedIn ? (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  onClick={handleJoinTable}
-                  disabled={isClaiming}
-                  style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}
-                >
-                  ⚡ Sentarme a la mesa como {currentUser?.nombre || 'Comensal'}
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={handleJoinTable}
+                    disabled={isClaiming}
+                    style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}
+                  >
+                    ⚡ Sentarme a la mesa como {currentUser?.nombre || 'Comensal'}
+                  </button>
+                  {isGuest && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        logout();
+                        setIsClaimModalOpen(true);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--cabales-gray)',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      ¿No eres {currentUser?.nombre}? Cambiar comensal o salir
+                    </button>
+                  )}
+                </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <button

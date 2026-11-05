@@ -58,13 +58,13 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         if (googleBtnContainerRef.current) {
           googleBtnContainerRef.current.innerHTML = '';
           window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
-            theme: 'outline',
+            theme: 'filled_black',
             size: 'large',
             type: 'standard',
             shape: 'pill',
             text: 'continue_with',
             logo_alignment: 'left',
-            width: 340,
+            width: 320,
             locale: 'es'
           });
           setIsGisReady(true);
@@ -129,13 +129,16 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           style={{
             display: googleClientId ? 'flex' : 'none',
             justifyContent: 'center',
+            alignItems: 'center',
             width: '100%',
-            minHeight: '44px'
+            minHeight: '44px',
+            borderRadius: '9999px',
+            overflow: 'hidden'
           }}
         />
 
-        {/* Botón de respaldo (SOLO se muestra si Google Client ID no existe o GIS falló al cargar) */}
-        {!isGisReady && (!googleClientId || !window.google?.accounts?.id) && (
+        {/* Botón de respaldo (SOLO se muestra si Google Client ID no está configurado en el entorno) */}
+        {!googleClientId && (
           <button
             type="button"
             onClick={handleClick}
