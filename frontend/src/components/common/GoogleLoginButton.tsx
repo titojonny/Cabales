@@ -25,6 +25,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const [showDevModal, setShowDevModal] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
+  const [isGisReady, setIsGisReady] = useState(false);
   const googleBtnContainerRef = useRef<HTMLDivElement>(null);
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -57,15 +58,16 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         if (googleBtnContainerRef.current) {
           googleBtnContainerRef.current.innerHTML = '';
           window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
-            theme: 'filled_black',
+            theme: 'outline',
             size: 'large',
             type: 'standard',
             shape: 'pill',
             text: 'continue_with',
             logo_alignment: 'left',
-            width: 320,
+            width: 340,
             locale: 'es'
           });
+          setIsGisReady(true);
         }
       } catch (e) {
         console.warn('Google Identity Services init notice:', e);
@@ -120,8 +122,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
 
   return (
     <>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '10px' }}>
-        {/* Contenedor del botón oficial de Google */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', gap: '8px' }}>
+        {/* Contenedor oficial de Google Identity Services */}
         <div
           ref={googleBtnContainerRef}
           style={{
@@ -132,8 +134,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           }}
         />
 
-        {/* Botón personalizado de respaldo (visible si no hay client ID o si GIS está cargando) */}
-        {(!googleClientId || !window.google?.accounts?.id) && (
+        {/* Botón de respaldo (SOLO se muestra si Google Client ID no existe o GIS falló al cargar) */}
+        {!isGisReady && (!googleClientId || !window.google?.accounts?.id) && (
           <button
             type="button"
             onClick={handleClick}
@@ -169,23 +171,25 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
           </button>
         )}
 
-        {/* Acceso rápido al simulador de cuentas locales para desarrollo */}
-        <button
-          type="button"
-          onClick={() => setShowDevModal(true)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--cabales-slate)',
-            fontSize: '0.78rem',
-            fontWeight: 500,
-            cursor: 'pointer',
-            padding: '2px 8px',
-            textDecoration: 'underline'
-          }}
-        >
-          ¿Probar con simulador de cuentas locales?
-        </button>
+        {/* Acceso a cuentas locales SOLO fuera de producción (oculto en producción) */}
+        {import.meta.env.DEV && (
+          <button
+            type="button"
+            onClick={() => setShowDevModal(true)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--cabales-slate)',
+              fontSize: '0.78rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+              padding: '2px 8px',
+              textDecoration: 'underline'
+            }}
+          >
+            ¿Probar con simulador de cuentas locales?
+          </button>
+        )}
       </div>
 
       {/* Selector de cuenta simple, elegante y ordenado */}
